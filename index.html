@@ -1,0 +1,1013 @@
+<title>符文乘區分配計算器 — 攻擊% 與 傷害% 的甜蜜點</title>
+
+<style>
+  :root {
+    --ground: #FAF9F7;
+    --panel: #FFFFFF;
+    --panel-2: #F2F1EE;
+    --line: #DEDCD6;
+    --line-soft: #EAE8E3;
+    --ink: #1A1A22;
+    --ink-2: #55555F;
+    --ink-3: #8A8A96;
+    --atk: #3B5BDB;
+    --atk-wash: rgba(59, 91, 219, 0.075);
+    --dmg: #E8590C;
+    --dmg-wash: rgba(232, 89, 12, 0.085);
+    --grid: #E4E2DC;
+    --warn-bg: #FBF3E4;
+    --warn-line: #E0C88A;
+    --warn-ink: #6B4E13;
+
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", -apple-system,
+            BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #17171B;
+      --panel: #1E1E24;
+      --panel-2: #24242C;
+      --line: #34343E;
+      --line-soft: #2A2A33;
+      --ink: #EDEDF2;
+      --ink-2: #A0A0AE;
+      --ink-3: #6E6E7C;
+      --atk: #5C7CFA;
+      --atk-wash: rgba(92, 124, 250, 0.13);
+      --dmg: #D9730D;
+      --dmg-wash: rgba(217, 115, 13, 0.15);
+      --grid: #2E2E38;
+      --warn-bg: #26200F;
+      --warn-line: #5C4A1C;
+      --warn-ink: #D9BE7C;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #17171B;
+    --panel: #1E1E24;
+    --panel-2: #24242C;
+    --line: #34343E;
+    --line-soft: #2A2A33;
+    --ink: #EDEDF2;
+    --ink-2: #A0A0AE;
+    --ink-3: #6E6E7C;
+    --atk: #5C7CFA;
+    --atk-wash: rgba(92, 124, 250, 0.13);
+    --dmg: #D9730D;
+    --dmg-wash: rgba(217, 115, 13, 0.15);
+    --grid: #2E2E38;
+    --warn-bg: #26200F;
+    --warn-line: #5C4A1C;
+    --warn-ink: #D9BE7C;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 40px 24px 72px;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0 0 10px;
+  }
+
+  h1 {
+    font-size: clamp(25px, 4.4vw, 35px);
+    line-height: 1.24;
+    letter-spacing: -0.017em;
+    font-weight: 700;
+    margin: 0 0 12px;
+    text-wrap: balance;
+  }
+
+  .lede {
+    margin: 0;
+    max-width: 62ch;
+    color: var(--ink-2);
+    font-size: 16px;
+  }
+
+  h2 {
+    font-size: 19px;
+    letter-spacing: -0.01em;
+    font-weight: 650;
+    margin: 0 0 4px;
+    text-wrap: balance;
+  }
+
+  .sub {
+    margin: 0 0 18px;
+    color: var(--ink-2);
+    font-size: 14px;
+    max-width: 66ch;
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 22px;
+  }
+
+  /* ---- disclaimer ---- */
+  .caution {
+    background: var(--warn-bg);
+    border: 1px solid var(--warn-line);
+    border-radius: 3px;
+    padding: 14px 16px;
+    color: var(--warn-ink);
+    font-size: 13.5px;
+    line-height: 1.6;
+  }
+  .caution strong { font-weight: 700; }
+
+  /* ---- verdict ---- */
+  .verdict {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 22px;
+    align-items: center;
+    border-left: 3px solid var(--verdict-hue, var(--ink-3));
+  }
+  .verdict-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0 0 6px;
+  }
+  .verdict-name {
+    font-size: clamp(22px, 3.6vw, 30px);
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    margin: 0 0 8px;
+    color: var(--verdict-hue, var(--ink));
+  }
+  .verdict-why {
+    margin: 0;
+    color: var(--ink-2);
+    font-size: 14px;
+    max-width: 54ch;
+  }
+  .verdict-num {
+    text-align: right;
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+  }
+  .verdict-num .big {
+    display: block;
+    font-size: clamp(30px, 5.4vw, 44px);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    color: var(--verdict-hue, var(--ink));
+  }
+  .verdict-num .cap {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-top: 8px;
+  }
+
+  /* ---- controls ---- */
+  .controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(258px, 1fr));
+    gap: 24px;
+  }
+  .ctl-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 9px;
+  }
+  .ctl-name {
+    font-size: 13.5px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .swatch {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex: none;
+  }
+  .ctl-val {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .ctl-note {
+    font-size: 12px;
+    color: var(--ink-3);
+    margin: 8px 0 0;
+    line-height: 1.5;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    background: transparent;
+    margin: 0;
+cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-runnable-track {
+    height: 3px;
+    background: var(--line);
+    border-radius: 2px;
+  }
+  input[type="range"]::-moz-range-track {
+    height: 3px;
+    background: var(--line);
+    border-radius: 2px;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 17px;
+    height: 17px;
+    border-radius: 50%;
+    background: var(--thumb, var(--ink));
+    border: 2px solid var(--panel);
+    margin-top: -7px;
+    box-shadow: 0 0 0 1px var(--thumb, var(--ink));
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: var(--thumb, var(--ink));
+    border: 2px solid var(--panel);
+    box-shadow: 0 0 0 1px var(--thumb, var(--ink));
+  }
+  input[type="range"]:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 4px;
+    border-radius: 3px;
+  }
+
+  /* ---- mode switch ---- */
+  .mode-box {
+    margin-top: 26px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line-soft);
+  }
+  .mode-q {
+    margin: 0 0 13px;
+    font-size: 13.5px;
+    font-weight: 600;
+  }
+  .mode-q span {
+    display: block;
+    font-weight: 400;
+    font-size: 12px;
+    color: var(--ink-3);
+    margin-top: 3px;
+  }
+  .mode-opts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 10px;
+  }
+  .mode-opts label {
+    display: flex;
+    gap: 9px;
+    align-items: start;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 11px 13px;
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+  .mode-opts label:hover { border-color: var(--ink-3); }
+  .mode-opts label:has(input:checked) {
+    border-color: var(--ink);
+    background: var(--panel-2);
+  }
+  .mode-opts input { margin-top: 3px; flex: none; accent-color: var(--ink); }
+  .mode-opts i {
+    display: block;
+    font-style: normal;
+    font-size: 11.5px;
+    color: var(--ink-3);
+    margin-top: 2px;
+  }
+  .mode-opts label:focus-within {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+
+  /* ---- charts ---- */
+  .chart-wrap { overflow-x: auto; }
+  svg { display: block; max-width: 100%; height: auto; }
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    margin-top: 14px;
+    font-size: 12.5px;
+    color: var(--ink-2);
+  }
+  .legend span { display: flex; align-items: center; gap: 7px; }
+  .key {
+    width: 15px;
+    height: 3px;
+    border-radius: 2px;
+    flex: none;
+  }
+  .key.sq { width: 11px; height: 11px; border-radius: 2px; }
+
+  /* ---- table ---- */
+  .tbl-wrap { overflow-x: auto; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 13.5px;
+    min-width: 500px;
+  }
+  th, td {
+    text-align: left;
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--line-soft);
+    vertical-align: top;
+  }
+  th {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    font-weight: 500;
+    border-bottom: 1px solid var(--line);
+  }
+  td.num {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    font-weight: 600;
+  }
+  td.cond { color: var(--ink-2); font-size: 12.5px; }
+  tr:last-child td { border-bottom: none; }
+  .dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 7px;
+    vertical-align: 0.5px;
+  }
+
+  .rule-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .rule-list li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 13px;
+    align-items: start;
+  }
+  .rule-n {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-3);
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    padding: 1px 6px;
+    margin-top: 3px;
+  }
+  .rule-list b { font-weight: 650; }
+
+  .formula {
+    font-family: var(--mono);
+    font-size: 13.5px;
+    background: var(--panel-2);
+    border: 1px solid var(--line-soft);
+    border-radius: 3px;
+    padding: 13px 15px;
+    overflow-x: auto;
+    white-space: nowrap;
+    color: var(--ink);
+  }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding-top: 22px;
+    font-size: 12.5px;
+    color: var(--ink-3);
+    line-height: 1.7;
+  }
+  footer a { color: var(--ink-2); }
+  footer p { margin: 0 0 9px; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .verdict-name, .verdict-num .big { transition: color 140ms ease; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">瑪奇 Mobile · 賽季 0 · 符文配置</p>
+    <h1>攻擊% 與 傷害% 的甜蜜點在哪</h1>
+    <p class="lede">
+      兩者進入傷害公式的不同乘區：同區內相加，區與區相乘。
+      因此「該加哪一邊」不是固定答案，而是取決於你現在哪一區比較空。
+      拉動滑桿，看你自己的位置落在哪。
+    </p>
+  </header>
+
+  <div class="caution">
+    <strong>先講清楚：這條公式官方從未公開。</strong>
+    台服官網《遊戲指南》只定義了 5 個主能力值、15 個下級能力值與 14 種傷害判定，沒有任何計算式。
+    下面用的乘區結構出自韓國遊戲媒體《게임톡》(2025-04-22) 與 Inven 玩家實測整理，屬於<strong>社群推導</strong>。
+    另有已知的標示問題：部分符文寫「造成的傷害」但實際以攻擊力結算（韓服社群稱「짭피증」），例如「決鬥」與「安定」。
+    <strong>而遺忘時代自己屬於哪一種，我沒有找到能定案的原文</strong> ——
+    玩家轉述同時存在「造成的傷害 +25%」與「終傷 +25%」兩種版本，兩者機制不同。
+    所以下面把它做成可切換的假設，而不是替你選一個。
+    <strong>把這裡的輸出當成決策方向，不是精確數值。</strong>
+  </div>
+
+  <section class="panel verdict" id="verdict">
+    <div>
+      <p class="verdict-label">在你目前的數值下，武器符文應選</p>
+      <p class="verdict-name" id="v-name">遺忘時代</p>
+      <p class="verdict-why" id="v-why"></p>
+    </div>
+    <div class="verdict-num">
+      <span class="big" id="v-gap">+8.3%</span>
+      <span class="cap">輸出差距</span>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>你目前的兩區數值</h2>
+    <p class="sub">
+      把身上所有「攻擊力 +%」加總填左邊，所有「造成的傷害 +%」加總填中間。
+      不確定的話，用下方的常見來源表估。
+    </p>
+    <div class="controls">
+      <div>
+        <div class="ctl-head">
+          <span class="ctl-name"><i class="swatch" style="background:var(--atk)"></i>攻擊力加成總和　<span style="font-family:var(--mono);color:var(--ink-3)">a</span></span>
+          <span class="ctl-val" id="out-a" style="color:var(--atk)">80%</span>
+        </div>
+        <input type="range" id="in-a" min="0" max="150" step="1" value="80" style="--thumb:var(--atk)" aria-label="攻擊力加成總和 (%)">
+        <p class="ctl-note">魔力激流、岩石巨人、千錘百鍊、領悟⋯⋯防具符文幾乎都落在這一區。</p>
+      </div>
+      <div>
+        <div class="ctl-head">
+          <span class="ctl-name"><i class="swatch" style="background:var(--dmg)"></i>傷害加成總和　<span style="font-family:var(--mono);color:var(--ink-3)">d</span></span>
+          <span class="ctl-val" id="out-d" style="color:var(--dmg)">10%</span>
+        </div>
+        <input type="range" id="in-d" min="0" max="150" step="1" value="10" style="--thumb:var(--dmg)" aria-label="傷害加成總和 (%)">
+        <p class="ctl-note">猛烈驟雨、荊棘藤蔓、盲目憤怒，以及隊友給的增傷 buff。</p>
+      </div>
+      <div>
+        <div class="ctl-head">
+          <span class="ctl-name">輸出受冷卻限制的程度</span>
+          <span class="ctl-val" id="out-w">70%</span>
+        </div>
+        <input type="range" id="in-w" min="0" max="100" step="5" value="70" aria-label="輸出受冷卻時間限制的程度 (%)">
+        <p class="ctl-note">
+          遺忘時代的代價是<b>所有技能 CD +6%</b>。技能循環卡 CD 的職業拉高；普攻佔比高、或已配「睿智」(CD −18%) 的往下拉。
+        </p>
+      </div>
+    </div>
+
+    <div class="mode-box">
+      <p class="mode-q">遺忘時代那 25% 實際落在哪一區？<span>這是全篇最大的未知數 — 三種可能導出完全不同的結論</span></p>
+      <div class="mode-opts">
+        <label><input type="radio" name="mode" value="dmg" checked><span><b>傷害區</b>（照字面）<i>與猛烈驟雨、盲目憤怒同區相加</i></span></label>
+        <label><input type="radio" name="mode" value="atk"><span><b>攻擊力區</b>（假傷增）<i>文字寫傷害、實際結算為攻擊力</i></span></label>
+        <label><input type="radio" name="mode" value="final"><span><b>獨立最終傷害</b><i>不與任何東西相加，單獨相乘</i></span></label>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>等值線圖：兩顆符文的分界</h2>
+    <p class="sub">
+      每條細曲線是一組輸出相同的 (a, d) 組合 — 越往右上輸出越高。
+      粗線是兩顆符文的臨界線；你的位置落在哪一側，那顆就比較好。
+    </p>
+    <div class="chart-wrap">
+      <svg id="chart1" viewBox="0 0 620 470" role="img" aria-labelledby="c1title">
+        <title id="c1title">攻擊力加成與傷害加成的等值線圖，含千把劍與遺忘時代的臨界分界線</title>
+      </svg>
+    </div>
+    <div class="legend">
+      <span><i class="key sq" style="background:var(--atk-wash);border:1px solid var(--atk)"></i>千把劍較優</span>
+      <span><i class="key sq" style="background:var(--dmg-wash);border:1px solid var(--dmg)"></i>遺忘時代較優</span>
+      <span><i class="key" style="background:var(--ink-3)"></i>等輸出線</span>
+      <span><i class="key" style="background:var(--ink-2);height:0;border-top:2px dashed var(--ink-2)"></i>a = d（兩區均衡）</span>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>邊際效益：下一個百分點加在哪裡最划算</h2>
+    <p class="sub">
+      在乘算結構下，同一區堆越高，再加 1 個百分點的相對收益越低（曲線為 1 ÷ (1+x)）。
+      兩個圓點分別是你的 a 與 d — <b>誰的點高，就往誰那一區加</b>。點在同高度時就是甜蜜點。
+    </p>
+    <div class="chart-wrap">
+      <svg id="chart2" viewBox="0 0 620 300" role="img" aria-labelledby="c2title">
+        <title id="c2title">邊際效益遞減曲線，標示目前攻擊力加成與傷害加成的位置</title>
+      </svg>
+    </div>
+    <div class="legend">
+      <span><i class="key sq" style="background:var(--atk)"></i>攻擊力區 a 的邊際收益</span>
+      <span><i class="key sq" style="background:var(--dmg)"></i>傷害區 d 的邊際收益</span>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>怎麼分配</h2>
+    <ol class="rule-list">
+      <li>
+        <span class="rule-n">1</span>
+        <div><b>甜蜜點就是兩區相等。</b> 在總量固定的前提下，讓 (1+a) 和 (1+d) 相等時乘積最大 —— 這是算幾不等式的直接結果，不是經驗法則。
+        總量 80% 時，四十／四十分比全押一邊多 <b>8.9%</b>；總量 160% 時多 <b>24.6%</b>。堆得越多，偏食的懲罰越重。</div>
+      </li>
+      <li>
+        <span class="rule-n">2</span>
+        <div><b>但你不必真的湊成相等，只要往低的那邊加。</b> 實務上供給是不對稱的：防具符文幾乎全是攻擊力%，傷害%主要靠武器符文和隊友 buff。
+        所以多數人的 a 遠大於 d，武器格自然該留給傷害%。</div>
+      </li>
+      <li>
+        <span class="rule-n">3</span>
+        <div><b>先確認你的 CD 有沒有餘裕。</b> 遺忘時代的 +6% CD 在乘區上的優勢會被吃掉一部分；輸出完全卡 CD 的職業要配徽章符文「睿智」(所有技能 CD −18%) 才划算。
+        走千把劍的話徽章通常配「絢爛」(暴擊率 +10%、暴擊傷害 +30%)。</div>
+      </li>
+      <li>
+        <span class="rule-n">4</span>
+        <div><b>已經有千把劍就別硬換。</b> 差距在多數配裝下是個位數百分比，換一顆傳說武器符文的成本遠高於此。</div>
+      </li>
+    </ol>
+  </section>
+
+  <section class="panel">
+    <h2>常見來源速查</h2>
+    <p class="sub">
+      用來估你自己的 a 和 d。數值取自 Inven 韓文符文資料庫與台服繁中符文說明；
+      <b>多數是條件式的</b>，實戰平均值會低於帳面。
+    </p>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr><th>符文</th><th>部位</th><th>數值</th><th>觸發條件</th></tr>
+        </thead>
+        <tbody id="tbl-body"></tbody>
+      </table>
+    </div>
+    <p class="ctl-note" style="margin-top:14px">
+      「決鬥+」與「安定」的文字寫的是造成傷害，但社群實測結算為攻擊力，故列在攻擊力區。
+    </p>
+  </section>
+
+  <section class="panel">
+    <h2>模型本身</h2>
+    <div class="formula">輸出 ∝ 基礎攻擊力 × (1 + a) × 技能倍率 × (1 + d) × (寶石標籤區) × (判定區)</div>
+    <p class="sub" style="margin:16px 0 14px">
+      技能倍率與其他乘區在比較兩顆符文時會相互抵消，所以只需要看 (1+a)(1+d)。
+      千把劍一律算成 <b style="font-family:var(--mono)">(1+a+0.24)(1+d)</b>；
+      遺忘時代則依你選的假設而不同，最後再除以 CD 懲罰 <b style="font-family:var(--mono)">(1 + 0.06 × 受限程度)</b>。
+    </p>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>假設</th><th>遺忘時代的乘數</th><th>結果</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>傷害區</td>
+            <td class="num" style="font-weight:500">(1+a)(1+d+0.25)</td>
+            <td class="cond">臨界為 a &gt; 0.96d − 0.04；a 不低於 d 就贏，但 CD 會翻盤</td>
+          </tr>
+          <tr>
+            <td>攻擊力區</td>
+            <td class="num" style="font-weight:500">(1+a+0.25)(1+d)</td>
+            <td class="cond">只比千把劍多 1 個百分點，卻多背 CD ⇒ 幾乎必輸</td>
+          </tr>
+          <tr>
+            <td>獨立最終傷害</td>
+            <td class="num" style="font-weight:500">(1+a)(1+d)×1.25</td>
+            <td class="cond">不受任何稀釋，與 d 無關 ⇒ 只要 CD 扛得住就贏</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    <p><b>資料來源</b>　게임톡「마비노기M, 무기 및 방어구 룬 티어 정리」(최은상 記者, 2025-04-22)；
+      Inven「공증과 피증에 관한 설명글」(꼬꼬마슛, 2025-04-30)；
+      Inven「신규 룬 14종 추가!」(Noori, 2025-05-08)；
+      DCinside「짭/찐 피해증가 룬 정리」(꽃휴먼, 2025-04-18)；
+      巴哈姆特 snA=1979、snA=1506；台服官網《遊戲指南》與 NEXON NOW 機率公示。</p>
+    <p><b>已知的不確定</b>　一次獨立查核（41 個代理、739 次工具呼叫）把以下缺口挑了出來，都還沒有補上：</p>
+    <p>
+      ①「遺忘時代 = 終傷 +25%」僅見於台服玩家轉述韓服，無原始實測數據；同串另一位玩家的版本是「造成的傷害 +25%」，兩者機制不同。<br>
+      ② 台服玩家自己做的打樁實測<b>一筆都不存在</b> — 巴哈板標題搜「實測／乘算／乘區／終傷／增傷」全部 0 筆，所有乘區說法都是轉述韓服。<br>
+      ③「攻擊力 +%」加在哪個基數（武器基礎攻擊力／面板總攻擊力）未確認，只有一則自承不確定的觀察。<br>
+      ④ 韓服「真/假傷增」的逐顆分類表原始檔已被作者刪除，無法逐顆核對；台服是否已修正標示不明。<br>
+      ⑤ 上述韓服資料皆為 2025 年 4–5 月（韓服 S0）的環境，台服為 2026 年開服的賽季 0，符文池與數值是否一致未驗證。<br>
+      ⑥ 巴哈已出現玩家貼 AI 生成答案被同串指正的案例，引用社群資料時要留意這個污染源。
+    </p>
+    <p>結論：<b>這題目前沒有可靠的公開資料能定案。</b>上面的模型是決策輔助，真正的答案要你自己在遊戲內用木樁測 —— 固定目標、單發技能、每組 20~30 次取平均、一次只換一顆符文。</p>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var SRC = [
+    ["千把劍", "武器", "atk", "+24%", "6 個用劍職業各達職業 40 級（每個 +4%）"],
+    ["千錘百鍊", "武器", "atk", "+20%", "裝備 +10 給 12%，+15 再給 8%"],
+    ["決鬥+", "武器", "atk", "+18%", "常駐；多重打擊傷害 −6%"],
+    ["激怒+", "武器", "atk", "+36%", "每 10 秒只持續 3 秒"],
+    ["魔力激流", "防具", "atk", "+14%", "每次使用技能 +3.5%，最多 4 層"],
+    ["岩石巨人", "防具", "atk", "+20%", "強擊 3 層後消耗，5 秒內 +20%"],
+    ["領悟", "防具", "atk", "+10%", "職業等級 40 給 6%，65 再給 4%"],
+    ["吸血+", "防具", "atk", "+15%", "攻擊帶「持續傷害：出血」的敵人"],
+    ["安定", "防具", "atk", "+11%", "體力 75% 以上"],
+    ["遺忘時代", "武器", "dmg", "+25%", "常駐；所有技能 CD +6%"],
+    ["荊棘藤蔓", "武器", "dmg", "+25%", "常駐；自己受到的傷害也 +25%"],
+    ["盲目憤怒", "武器", "dmg", "+24%", "連擊每次 +2% 最多 12 層，斷連擊即歸零"],
+    ["激戰+", "武器", "dmg", "+18%", "依周圍 5m 內敵人數量，最多 18%"],
+    ["猛烈驟雨", "防具", "dmg", "+30%", "使用絕招後 15 秒內"]
+  ];
+
+  var tb = document.getElementById("tbl-body");
+  SRC.forEach(function (r) {
+    var tr = document.createElement("tr");
+    var hue = r[2] === "atk" ? "var(--atk)" : "var(--dmg)";
+    var td0 = document.createElement("td");
+    td0.innerHTML = '<i class="dot" style="background:' + hue + '"></i>';
+    td0.appendChild(document.createTextNode(r[0]));
+    var td1 = document.createElement("td");
+    td1.className = "cond";
+    td1.textContent = r[1];
+    var td2 = document.createElement("td");
+    td2.className = "num";
+    td2.style.color = hue;
+    td2.textContent = r[3];
+    var td3 = document.createElement("td");
+    td3.className = "cond";
+    td3.textContent = r[4];
+    tr.appendChild(td0); tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
+    tb.appendChild(tr);
+  });
+
+  var NS = "http://www.w3.org/2000/svg";
+  var ATK_BONUS = 0.24, DMG_BONUS = 0.25, CD_PEN = 0.06;
+  var MAX = 1.5;
+
+  function el(name, attrs) {
+    var n = document.createElementNS(NS, name);
+    for (var k in attrs) if (attrs.hasOwnProperty(k)) n.setAttribute(k, attrs[k]);
+    return n;
+  }
+  function txt(x, y, s, attrs) {
+    var t = el("text", attrs || {});
+    t.setAttribute("x", x); t.setAttribute("y", y);
+    t.textContent = s;
+    return t;
+  }
+  function pct(v) { return Math.round(v * 100) + "%"; }
+
+  // damage multipliers, skill coefficient cancels out
+  function withSword(a, d) { return (1 + a + ATK_BONUS) * (1 + d); }
+
+  // Era's multiplier is linear in d: era = p0 + p1*d. Which line depends on
+  // where that 25% actually lands — the open question the radios expose.
+  function eraCoef(a, w, mode) {
+    var A = 1 + a, P = 1 + CD_PEN * w;
+    if (mode === "atk") { var k = (A + DMG_BONUS) / P; return [k, k]; }
+    if (mode === "final") { var m = (1 + DMG_BONUS) * A / P; return [m, m]; }
+    return [(1 + DMG_BONUS) * A / P, A / P];
+  }
+  function withEra(a, d, w, mode) {
+    var c = eraCoef(a, w, mode);
+    return c[0] + c[1] * d;
+  }
+
+  // d at which the two tie, for a given a. null = they never tie (parallel).
+  function tieD(a, w, mode) {
+    var q = 1 + a + ATK_BONUS, c = eraCoef(a, w, mode);
+    var den = c[1] - q;
+    if (Math.abs(den) < 1e-12) return null;
+    return (q - c[0]) / den;
+  }
+
+  var C1 = { w: 620, h: 470, l: 62, r: 22, t: 22, b: 48 };
+  C1.iw = C1.w - C1.l - C1.r;
+  C1.ih = C1.h - C1.t - C1.b;
+  var x1 = function (a) { return C1.l + (a / MAX) * C1.iw; };
+  var y1 = function (d) { return C1.t + C1.ih - (d / MAX) * C1.ih; };
+
+  function drawChart1(a, d, w, mode) {
+    var s = document.getElementById("chart1");
+    var keep = s.querySelector("title");
+    s.textContent = "";
+    if (keep) s.appendChild(keep);
+
+    // --- decision regions, filled column by column so the winner is read off
+    //     the model directly rather than inferred from the tie curve's side ---
+    var N = 160, colW = C1.iw / N + 0.6, i, av, dv;
+    var tieSeg = [], sawBoth = false;
+    for (i = 0; i < N; i++) {
+      av = MAX * (i + 0.5) / N;
+      var lo = withEra(av, 0, w, mode) > withSword(av, 0);
+      var hi = withEra(av, MAX, w, mode) > withSword(av, MAX);
+      var xa = C1.l + (C1.iw * i / N);
+      var cut = null;
+      if (lo !== hi) {
+        dv = tieD(av, w, mode);
+        if (dv !== null && dv > 0 && dv < MAX) { cut = dv; sawBoth = true; }
+      }
+      if (cut === null) {
+        s.appendChild(el("rect", {
+          x: xa, y: C1.t, width: colW, height: C1.ih,
+          fill: lo ? "var(--dmg-wash)" : "var(--atk-wash)", stroke: "none"
+        }));
+      } else {
+        s.appendChild(el("rect", {
+          x: xa, y: y1(cut), width: colW, height: C1.t + C1.ih - y1(cut),
+          fill: lo ? "var(--dmg-wash)" : "var(--atk-wash)", stroke: "none"
+        }));
+        s.appendChild(el("rect", {
+          x: xa, y: C1.t, width: colW, height: y1(cut) - C1.t,
+          fill: hi ? "var(--dmg-wash)" : "var(--atk-wash)", stroke: "none"
+        }));
+        tieSeg.push([av, cut]);
+      }
+    }
+
+    // --- grid ---
+    var g;
+    for (i = 0; i <= 6; i++) {
+      var gv = MAX * i / 6;
+      s.appendChild(el("line", {
+        x1: x1(gv), y1: C1.t, x2: x1(gv), y2: C1.t + C1.ih,
+        stroke: "var(--grid)", "stroke-width": 1
+      }));
+      s.appendChild(el("line", {
+        x1: C1.l, y1: y1(gv), x2: C1.l + C1.iw, y2: y1(gv),
+        stroke: "var(--grid)", "stroke-width": 1
+      }));
+      s.appendChild(txt(x1(gv), C1.t + C1.ih + 20, pct(gv), {
+        "text-anchor": "middle", fill: "var(--ink-3)",
+        "font-family": "var(--mono)", "font-size": 11
+      }));
+      s.appendChild(txt(C1.l - 11, y1(gv) + 4, pct(gv), {
+        "text-anchor": "end", fill: "var(--ink-3)",
+        "font-family": "var(--mono)", "font-size": 11
+      }));
+    }
+
+    // --- iso-output curves: (1+a)(1+d) = k ---
+    var ks = [1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 5.0, 6.0];
+    for (var ki = 0; ki < ks.length; ki++) {
+      var k = ks[ki], path = "", on = false;
+      for (i = 0; i <= 120; i++) {
+        av = MAX * i / 120;
+        dv = k / (1 + av) - 1;
+        if (dv < 0 || dv > MAX) { on = false; continue; }
+        path += (on ? "L" : "M") + x1(av).toFixed(1) + "," + y1(dv).toFixed(1);
+        on = true;
+      }
+      if (path) {
+        s.appendChild(el("path", {
+          d: path, fill: "none", stroke: "var(--ink-3)",
+          "stroke-width": 1, opacity: 0.42
+        }));
+      }
+    }
+
+    // --- a = d diagonal ---
+    s.appendChild(el("line", {
+      x1: x1(0), y1: y1(0), x2: x1(MAX), y2: y1(MAX),
+      stroke: "var(--ink-2)", "stroke-width": 1.5,
+      "stroke-dasharray": "5 4", opacity: 0.65
+    }));
+
+    // --- tie line ---
+    if (tieSeg.length > 1) {
+      var tp = "";
+      for (i = 0; i < tieSeg.length; i++) {
+        tp += (i ? "L" : "M") + x1(tieSeg[i][0]).toFixed(1) + "," + y1(tieSeg[i][1]).toFixed(1);
+      }
+      s.appendChild(el("path", {
+        d: tp, fill: "none", stroke: "var(--ink)",
+        "stroke-width": 2.5, "stroke-linecap": "round"
+      }));
+    }
+
+    // --- your position ---
+    var px = x1(Math.min(a, MAX)), py = y1(Math.min(d, MAX));
+    s.appendChild(el("line", { x1: px, y1: C1.t, x2: px, y2: C1.t + C1.ih, stroke: "var(--ink)", "stroke-width": 1, "stroke-dasharray": "2 3", opacity: 0.5 }));
+    s.appendChild(el("line", { x1: C1.l, y1: py, x2: C1.l + C1.iw, y2: py, stroke: "var(--ink)", "stroke-width": 1, "stroke-dasharray": "2 3", opacity: 0.5 }));
+    s.appendChild(el("circle", { cx: px, cy: py, r: 8.5, fill: "var(--panel)", stroke: "none" }));
+    s.appendChild(el("circle", { cx: px, cy: py, r: 5.5, fill: "var(--ink)", stroke: "var(--panel)", "stroke-width": 2 }));
+
+    var lx = px < C1.l + C1.iw - 120 ? px + 13 : px - 13;
+    var anchor = px < C1.l + C1.iw - 120 ? "start" : "end";
+    var ly = py < C1.t + 30 ? py + 22 : py - 12;
+    s.appendChild(txt(lx, ly, "你在這裡", {
+      "text-anchor": anchor, fill: "var(--ink)",
+      "font-size": 12.5, "font-weight": 600
+    }));
+
+    // --- region labels, named from the model at each corner ---
+    var tl = withEra(0, MAX, w, mode) > withSword(0, MAX);
+    var br = withEra(MAX, 0, w, mode) > withSword(MAX, 0);
+    s.appendChild(txt(C1.l + 14, C1.t + 22, tl ? "遺忘時代較優" : "千把劍較優", {
+      fill: tl ? "var(--dmg)" : "var(--atk)", "font-size": 12.5,
+      "font-weight": 650, opacity: 0.9
+    }));
+    if (br !== tl || sawBoth) {
+      s.appendChild(txt(C1.l + C1.iw - 14, C1.t + C1.ih - 14, br ? "遺忘時代較優" : "千把劍較優", {
+        "text-anchor": "end", fill: br ? "var(--dmg)" : "var(--atk)",
+        "font-size": 12.5, "font-weight": 650, opacity: 0.9
+      }));
+    }
+
+    // --- axis titles ---
+    s.appendChild(txt(C1.l + C1.iw / 2, C1.h - 10, "攻擊力加成總和　a", {
+      "text-anchor": "middle", fill: "var(--ink-2)", "font-size": 12.5, "font-weight": 600
+    }));
+    var yt = txt(0, 0, "傷害加成總和　d", {
+      "text-anchor": "middle", fill: "var(--ink-2)", "font-size": 12.5, "font-weight": 600,
+      transform: "translate(15," + (C1.t + C1.ih / 2) + ") rotate(-90)"
+    });
+    s.appendChild(yt);
+  }
+
+  var C2 = { w: 620, h: 300, l: 62, r: 22, t: 22, b: 48 };
+  C2.iw = C2.w - C2.l - C2.r;
+  C2.ih = C2.h - C2.t - C2.b;
+  var x2 = function (v) { return C2.l + (v / MAX) * C2.iw; };
+  var y2 = function (v) { return C2.t + C2.ih - ((v - 0.4) / 0.6) * C2.ih; };
+
+  function drawChart2(a, d) {
+    var s = document.getElementById("chart2");
+    var keep = s.querySelector("title");
+    s.textContent = "";
+    if (keep) s.appendChild(keep);
+
+    var i, gv;
+    for (i = 0; i <= 6; i++) {
+      gv = MAX * i / 6;
+      s.appendChild(el("line", {
+        x1: x2(gv), y1: C2.t, x2: x2(gv), y2: C2.t + C2.ih,
+        stroke: "var(--grid)", "stroke-width": 1
+      }));
+      s.appendChild(txt(x2(gv), C2.t + C2.ih + 20, pct(gv), {
+        "text-anchor": "middle", fill: "var(--ink-3)",
+        "font-family": "var(--mono)", "font-size": 11
+      }));
+    }
+    [0.4, 0.6, 0.8, 1.0].forEach(function (v) {
+      s.appendChild(el("line", {
+        x1: C2.l, y1: y2(v), x2: C2.l + C2.iw, y2: y2(v),
+        stroke: "var(--grid)", "stroke-width": 1
+      }));
+      s.appendChild(txt(C2.l - 11, y2(v) + 4, Math.round(v * 100) + "%", {
+        "text-anchor": "end", fill: "var(--ink-3)",
+        "font-family": "var(--mono)", "font-size": 11
+      }));
+    });
+
+    var path = "";
+    for (i = 0; i <= 150; i++) {
+      var xv = MAX * i / 150;
+      path += (i ? "L" : "M") + x2(xv).toFixed(1) + "," + y2(1 / (1 + xv)).toFixed(1);
+    }
+    s.appendChild(el("path", {
+      d: path, fill: "none", stroke: "var(--ink-2)",
+      "stroke-width": 2, "stroke-linecap": "round", opacity: 0.75
+    }));
+
+    function marker(v, hue, label, side) {
+      var cx = x2(Math.min(v, MAX)), cy = y2(1 / (1 + Math.min(v, MAX)));
+      s.appendChild(el("line", {
+        x1: cx, y1: cy, x2: cx, y2: C2.t + C2.ih,
+        stroke: hue, "stroke-width": 1.5, "stroke-dasharray": "3 3", opacity: 0.55
+      }));
+      s.appendChild(el("circle", { cx: cx, cy: cy, r: 7.5, fill: "var(--panel)" }));
+      s.appendChild(el("circle", { cx: cx, cy: cy, r: 5, fill: hue, stroke: "var(--panel)", "stroke-width": 2 }));
+      s.appendChild(txt(cx + (side === "l" ? -11 : 11), cy - 11, label, {
+        "text-anchor": side === "l" ? "end" : "start",
+        fill: hue, "font-size": 12, "font-weight": 650
+      }));
+    }
+    var aFirst = a <= d;
+    marker(a, "var(--atk)", "a " + pct(a), aFirst ? "l" : "r");
+    marker(d, "var(--dmg)", "d " + pct(d), aFirst ? "r" : "l");
+
+    s.appendChild(txt(C2.l + C2.iw / 2, C2.h - 10, "該區目前的總和", {
+      "text-anchor": "middle", fill: "var(--ink-2)", "font-size": 12.5, "font-weight": 600
+    }));
+    s.appendChild(txt(0, 0, "每 +1pt 的相對收益", {
+      "text-anchor": "middle", fill: "var(--ink-2)", "font-size": 12.5, "font-weight": 600,
+      transform: "translate(15," + (C2.t + C2.ih / 2) + ") rotate(-90)"
+    }));
+  }
+
+  var inA = document.getElementById("in-a"),
+      inD = document.getElementById("in-d"),
+      inW = document.getElementById("in-w");
+
+  function currentMode() {
+    var r = document.querySelector('input[name="mode"]:checked');
+    return r ? r.value : "dmg";
+  }
+
+  function render() {
+    var a = +inA.value / 100, d = +inD.value / 100, w = +inW.value / 100;
+    var mode = currentMode();
+
+    document.getElementById("out-a").textContent = pct(a);
+    document.getElementById("out-d").textContent = pct(d);
+    document.getElementById("out-w").textContent = Math.round(w * 100) + "%";
+
+    var s1 = withSword(a, d), s2 = withEra(a, d, w, mode);
+    var eraWins = s2 > s1;
+    var gap = Math.abs(s2 / s1 - 1);
+    var hue = eraWins ? "var(--dmg)" : "var(--atk)";
+
+    document.getElementById("verdict").style.setProperty("--verdict-hue", hue);
+    document.getElementById("v-name").textContent = eraWins ? "遺忘時代" : "千把劍";
+    document.getElementById("v-gap").textContent = "+" + (gap * 100).toFixed(1) + "%";
+
+    var why;
+    if (mode === "atk") {
+      why = "在這個假設下，那 25% 其實跟千把劍的 24% 擠在同一區 —— 只多 1 個百分點，卻要多背 +6% CD。"
+          + "如果社群的「假傷增」判定套用在這顆上，結論就整個翻過來。";
+    } else if (mode === "final") {
+      why = "在這個假設下，25% 完全不與任何東西相加，獨立乘上去，所以不管你堆多少都不會被稀釋 —— "
+          + "這是對遺忘時代最有利的解讀，也是最缺乏原文佐證的一個。";
+    } else if (gap < 0.01) {
+      why = "兩顆幾乎打平（差距不到 1%）。這種情況下選你已經有的那顆，把資源花在別的地方。";
+    } else if (eraWins) {
+      why = "你的攻擊力區已經堆到 " + pct(a) + "，再加 24% 會被自己稀釋；"
+          + "傷害區只有 " + pct(d) + "，25% 吃得比較完整。前提是那 +6% CD 你扛得住。";
+    } else if (w >= 0.5 && (1 + a) >= (1 + d) * 0.96) {
+      why = "純看乘區其實是遺忘時代較優，但你的輸出高度依賴技能循環，+6% CD 把優勢吃掉了。"
+          + "配上徽章符文「睿智」(CD −18%) 之後可以再回來看一次。";
+    } else {
+      why = "你的傷害區已經有 " + pct(d) + "，比攻擊力區的 " + pct(a) + " 更擁擠，"
+          + "所以這次該補攻擊力那一邊。";
+    }
+    document.getElementById("v-why").textContent = why;
+
+    drawChart1(a, d, w, mode);
+    drawChart2(a, d);
+  }
+
+  [inA, inD, inW].forEach(function (n) {
+    n.addEventListener("input", render);
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('input[name="mode"]'), function (n) {
+    n.addEventListener("change", render);
+  });
+  render();
+})();
+</script>

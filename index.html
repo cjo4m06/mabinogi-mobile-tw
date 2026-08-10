@@ -277,58 +277,6 @@ cursor: pointer;
     border-radius: 3px;
   }
 
-  /* ---- mode switch ---- */
-  .mode-box {
-    margin-top: 26px;
-    padding-top: 20px;
-    border-top: 1px solid var(--line-soft);
-  }
-  .mode-q {
-    margin: 0 0 13px;
-    font-size: 13.5px;
-    font-weight: 600;
-  }
-  .mode-q span {
-    display: block;
-    font-weight: 400;
-    font-size: 12px;
-    color: var(--ink-3);
-    margin-top: 3px;
-  }
-  .mode-opts {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-    gap: 10px;
-  }
-  .mode-opts label {
-    display: flex;
-    gap: 9px;
-    align-items: start;
-    border: 1px solid var(--line);
-    border-radius: 3px;
-    padding: 11px 13px;
-    cursor: pointer;
-    font-size: 13px;
-    line-height: 1.45;
-  }
-  .mode-opts label:hover { border-color: var(--ink-3); }
-  .mode-opts label:has(input:checked) {
-    border-color: var(--ink);
-    background: var(--panel-2);
-  }
-  .mode-opts input { margin-top: 3px; flex: none; accent-color: var(--ink); }
-  .mode-opts i {
-    display: block;
-    font-style: normal;
-    font-size: 11.5px;
-    color: var(--ink-3);
-    margin-top: 2px;
-  }
-  .mode-opts label:focus-within {
-    outline: 2px solid var(--ink);
-    outline-offset: 2px;
-  }
-
   /* ---- charts ---- */
   .chart-wrap { overflow-x: auto; }
   svg { display: block; max-width: 100%; height: auto; }
@@ -458,9 +406,8 @@ cursor: pointer;
     台服官網《遊戲指南》只定義了 5 個主能力值、15 個下級能力值與 14 種傷害判定，沒有任何計算式。
     下面用的乘區結構出自韓國遊戲媒體《게임톡》(2025-04-22) 與 Inven 玩家實測整理，屬於<strong>社群推導</strong>。
     另有已知的標示問題：部分符文寫「造成的傷害」但實際以攻擊力結算（韓服社群稱「짭피증」），例如「決鬥」與「安定」。
-    <strong>而遺忘時代自己屬於哪一種，我沒有找到能定案的原文</strong> ——
-    玩家轉述同時存在「造成的傷害 +25%」與「終傷 +25%」兩種版本，兩者機制不同。
-    所以下面把它做成可切換的假設，而不是替你選一個。
+    下面把遺忘時代的 25% <strong>照符文文字算在傷害區</strong>；若它實際上是那種「假傷增」，
+    結論會反過來變成千把劍較優 —— 這點我沒有找到能定案的原文。
     <strong>把這裡的輸出當成決策方向，不是精確數值。</strong>
   </div>
 
@@ -511,14 +458,6 @@ cursor: pointer;
       </div>
     </div>
 
-    <div class="mode-box">
-      <p class="mode-q">遺忘時代那 25% 實際落在哪一區？<span>這是全篇最大的未知數 — 三種可能導出完全不同的結論</span></p>
-      <div class="mode-opts">
-        <label><input type="radio" name="mode" value="dmg" checked><span><b>傷害區</b>（照字面）<i>與猛烈驟雨、盲目憤怒同區相加</i></span></label>
-        <label><input type="radio" name="mode" value="atk"><span><b>攻擊力區</b>（假傷增）<i>文字寫傷害、實際結算為攻擊力</i></span></label>
-        <label><input type="radio" name="mode" value="final"><span><b>獨立最終傷害</b><i>不與任何東西相加，單獨相乘</i></span></label>
-      </div>
-    </div>
   </section>
 
   <section class="panel">
@@ -604,33 +543,14 @@ cursor: pointer;
   <section class="panel">
     <h2>模型本身</h2>
     <div class="formula">輸出 ∝ 基礎攻擊力 × (1 + a) × 技能倍率 × (1 + d) × (寶石標籤區) × (判定區)</div>
-    <p class="sub" style="margin:16px 0 14px">
+    <p class="sub" style="margin:16px 0 0">
       技能倍率與其他乘區在比較兩顆符文時會相互抵消，所以只需要看 (1+a)(1+d)。
-      千把劍一律算成 <b style="font-family:var(--mono)">(1+a+0.24)(1+d)</b>；
-      遺忘時代則依你選的假設而不同，最後再除以 CD 懲罰 <b style="font-family:var(--mono)">(1 + 0.06 × 受限程度)</b>。
+      千把劍算成 <b style="font-family:var(--mono)">(1+a+0.24)(1+d)</b>，
+      遺忘時代算成 <b style="font-family:var(--mono)">(1+a)(1+d+0.25)</b>，
+      後者再除以 CD 懲罰 <b style="font-family:var(--mono)">(1 + 0.06 × 受限程度)</b>。
+      忽略 CD 時的臨界條件可以化簡成 <b style="font-family:var(--mono)">a &gt; 0.96d − 0.04</b> ——
+      也就是說只要 a 大致不低於 d，遺忘時代就贏。
     </p>
-    <div class="tbl-wrap">
-      <table>
-        <thead><tr><th>假設</th><th>遺忘時代的乘數</th><th>結果</th></tr></thead>
-        <tbody>
-          <tr>
-            <td>傷害區</td>
-            <td class="num" style="font-weight:500">(1+a)(1+d+0.25)</td>
-            <td class="cond">臨界為 a &gt; 0.96d − 0.04；a 不低於 d 就贏，但 CD 會翻盤</td>
-          </tr>
-          <tr>
-            <td>攻擊力區</td>
-            <td class="num" style="font-weight:500">(1+a+0.25)(1+d)</td>
-            <td class="cond">只比千把劍多 1 個百分點，卻多背 CD ⇒ 幾乎必輸</td>
-          </tr>
-          <tr>
-            <td>獨立最終傷害</td>
-            <td class="num" style="font-weight:500">(1+a)(1+d)×1.25</td>
-            <td class="cond">不受任何稀釋，與 d 無關 ⇒ 只要 CD 扛得住就贏</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
   </section>
 
   <footer>
@@ -715,25 +635,18 @@ cursor: pointer;
   // damage multipliers, skill coefficient cancels out
   function withSword(a, d) { return (1 + a + ATK_BONUS) * (1 + d); }
 
-  // Era's multiplier is linear in d: era = p0 + p1*d. Which line depends on
-  // where that 25% actually lands — the open question the radios expose.
-  function eraCoef(a, w, mode) {
-    var A = 1 + a, P = 1 + CD_PEN * w;
-    if (mode === "atk") { var k = (A + DMG_BONUS) / P; return [k, k]; }
-    if (mode === "final") { var m = (1 + DMG_BONUS) * A / P; return [m, m]; }
-    return [(1 + DMG_BONUS) * A / P, A / P];
-  }
-  function withEra(a, d, w, mode) {
-    var c = eraCoef(a, w, mode);
-    return c[0] + c[1] * d;
+  // Era's 25% is taken at face value — the rune says "damage dealt", so it
+  // goes in the damage bucket alongside 猛烈驟雨 / 盲目憤怒.
+  function withEra(a, d, w) {
+    return (1 + a) * (1 + d + DMG_BONUS) / (1 + CD_PEN * w);
   }
 
-  // d at which the two tie, for a given a. null = they never tie (parallel).
-  function tieD(a, w, mode) {
-    var q = 1 + a + ATK_BONUS, c = eraCoef(a, w, mode);
-    var den = c[1] - q;
+  // d at which the two tie, for a given a. Both sides are linear in d.
+  function tieD(a, w) {
+    var A = 1 + a, P = 1 + CD_PEN * w;
+    var den = A / P - (A + ATK_BONUS);
     if (Math.abs(den) < 1e-12) return null;
-    return (q - c[0]) / den;
+    return ((A + ATK_BONUS) - (1 + DMG_BONUS) * A / P) / den;
   }
 
   var C1 = { w: 620, h: 470, l: 62, r: 22, t: 22, b: 48 };
@@ -742,7 +655,7 @@ cursor: pointer;
   var x1 = function (a) { return C1.l + (a / MAX) * C1.iw; };
   var y1 = function (d) { return C1.t + C1.ih - (d / MAX) * C1.ih; };
 
-  function drawChart1(a, d, w, mode) {
+  function drawChart1(a, d, w) {
     var s = document.getElementById("chart1");
     var keep = s.querySelector("title");
     s.textContent = "";
@@ -754,12 +667,12 @@ cursor: pointer;
     var tieSeg = [], sawBoth = false;
     for (i = 0; i < N; i++) {
       av = MAX * (i + 0.5) / N;
-      var lo = withEra(av, 0, w, mode) > withSword(av, 0);
-      var hi = withEra(av, MAX, w, mode) > withSword(av, MAX);
+      var lo = withEra(av, 0, w) > withSword(av, 0);
+      var hi = withEra(av, MAX, w) > withSword(av, MAX);
       var xa = C1.l + (C1.iw * i / N);
       var cut = null;
       if (lo !== hi) {
-        dv = tieD(av, w, mode);
+        dv = tieD(av, w);
         if (dv !== null && dv > 0 && dv < MAX) { cut = dv; sawBoth = true; }
       }
       if (cut === null) {
@@ -856,8 +769,8 @@ cursor: pointer;
     }));
 
     // --- region labels, named from the model at each corner ---
-    var tl = withEra(0, MAX, w, mode) > withSword(0, MAX);
-    var br = withEra(MAX, 0, w, mode) > withSword(MAX, 0);
+    var tl = withEra(0, MAX, w) > withSword(0, MAX);
+    var br = withEra(MAX, 0, w) > withSword(MAX, 0);
     s.appendChild(txt(C1.l + 14, C1.t + 22, tl ? "遺忘時代較優" : "千把劍較優", {
       fill: tl ? "var(--dmg)" : "var(--atk)", "font-size": 12.5,
       "font-weight": 650, opacity: 0.9
@@ -955,20 +868,14 @@ cursor: pointer;
       inD = document.getElementById("in-d"),
       inW = document.getElementById("in-w");
 
-  function currentMode() {
-    var r = document.querySelector('input[name="mode"]:checked');
-    return r ? r.value : "dmg";
-  }
-
   function render() {
     var a = +inA.value / 100, d = +inD.value / 100, w = +inW.value / 100;
-    var mode = currentMode();
 
     document.getElementById("out-a").textContent = pct(a);
     document.getElementById("out-d").textContent = pct(d);
     document.getElementById("out-w").textContent = Math.round(w * 100) + "%";
 
-    var s1 = withSword(a, d), s2 = withEra(a, d, w, mode);
+    var s1 = withSword(a, d), s2 = withEra(a, d, w);
     var eraWins = s2 > s1;
     var gap = Math.abs(s2 / s1 - 1);
     var hue = eraWins ? "var(--dmg)" : "var(--atk)";
@@ -978,13 +885,7 @@ cursor: pointer;
     document.getElementById("v-gap").textContent = "+" + (gap * 100).toFixed(1) + "%";
 
     var why;
-    if (mode === "atk") {
-      why = "在這個假設下，那 25% 其實跟千把劍的 24% 擠在同一區 —— 只多 1 個百分點，卻要多背 +6% CD。"
-          + "如果社群的「假傷增」判定套用在這顆上，結論就整個翻過來。";
-    } else if (mode === "final") {
-      why = "在這個假設下，25% 完全不與任何東西相加，獨立乘上去，所以不管你堆多少都不會被稀釋 —— "
-          + "這是對遺忘時代最有利的解讀，也是最缺乏原文佐證的一個。";
-    } else if (gap < 0.01) {
+    if (gap < 0.01) {
       why = "兩顆幾乎打平（差距不到 1%）。這種情況下選你已經有的那顆，把資源花在別的地方。";
     } else if (eraWins) {
       why = "你的攻擊力區已經堆到 " + pct(a) + "，再加 24% 會被自己稀釋；"
@@ -998,15 +899,12 @@ cursor: pointer;
     }
     document.getElementById("v-why").textContent = why;
 
-    drawChart1(a, d, w, mode);
+    drawChart1(a, d, w);
     drawChart2(a, d);
   }
 
   [inA, inD, inW].forEach(function (n) {
     n.addEventListener("input", render);
-  });
-  Array.prototype.forEach.call(document.querySelectorAll('input[name="mode"]'), function (n) {
-    n.addEventListener("change", render);
   });
   render();
 })();

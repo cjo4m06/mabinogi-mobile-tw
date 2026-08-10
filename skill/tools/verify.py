@@ -22,6 +22,16 @@
 
 ⚠ 「查無」不等於「台服沒有」，但**預設就是不要寫**。
    真的需要那條資訊時，去官方遊戲指南／更新日誌／巴哈找台服證據，找不到就不寫。
+
+★ 台服後來開放了怎麼辦（改版時最常遇到）:
+   在任何 references/*.md 加一行 HTML 註解，判定就會翻成「✅ 台服有」並顯示你寫的依據:
+
+       <!-- UNBLOCKED: 잊힌 시대 | 台服 2026-08-05 開放深淵地獄1，可從深淵許願壺取得 -->
+
+   為什麼需要這個: 封鎖清單是從標記往後硬抓 4000 字，
+   而「這顆已經開放了」的更正說明本身就得提到那個韓文名，
+   不另外標記的話會被自己的更正文字判成未開放。
+   ⇒ 從封鎖清單刪掉名字**還不夠**，要補一行 UNBLOCKED 才算數。
 """
 import os, re, sys
 
@@ -31,6 +41,14 @@ RUNE_TABLES = [f"data/符文-{p}-韓文原表.md" for p in ("武器", "防具", 
 SKILL_TABLE = "data/技能與標籤-全職業.md"
 BLOCK_SRC = [("references/04-各職業符文配置.md", "## 6. 台服未開放的符文"),
              ("references/09-賽季台韓差異與長期規劃.md", "台服 S0 **沒有**的韓服符文")]
+
+# 台服後來開放的東西：在任何 references/*.md 寫一行
+#     <!-- UNBLOCKED: 韓文名 | 何時開放／依據 -->
+# 就會覆蓋封鎖清單的判定。
+# 需要這個機制的原因：封鎖區塊是從標記往後硬抓 4000 字，
+# 而「這顆已經開放了」的更正說明本身就得提到那個韓文名，
+# 不另外標記的話會被自己的更正文字判成未開放。
+UNBLOCK_RE = re.compile(r"<!--\s*UNBLOCKED:\s*([^|>]+?)\s*(?:\|([^>]*?))?-->")
 
 
 def read(rel):
@@ -50,14 +68,24 @@ def load():
         t = read(rel)
         if marker in t:
             blocked += t.split(marker, 1)[1][:4000]
-    return pool, read(SKILL_TABLE), blocked
+    unblocked = {}
+    refs = os.path.join(ROOT, "references")
+    for fn in sorted(os.listdir(refs)) if os.path.isdir(refs) else []:
+        if not fn.endswith(".md"):
+            continue
+        for m in UNBLOCK_RE.finditer(read(os.path.join("references", fn))):
+            unblocked[m.group(1).strip()] = (m.group(2) or "").strip() or "已解除封鎖"
+    return pool, read(SKILL_TABLE), blocked, unblocked
 
 
-def judge(term, pool, skills, blocked):
+def judge(term, pool, skills, blocked, unblocked=None):
     term = term.strip()
     if not term:
         return None
+    unblocked = unblocked or {}
     where = [k for k, v in pool.items() if term in v]
+    if term in unblocked:
+        return "✅ 台服有", unblocked[term]
     if term in blocked:
         return "🚫 台服未開放", "明列於封鎖清單，不可寫進正文"
     if where:
@@ -68,7 +96,7 @@ def judge(term, pool, skills, blocked):
 
 
 def main():
-    pool, skills, blocked = load()
+    pool, skills, blocked, unblocked = load()
     args = sys.argv[1:]
     if not args:
         print(__doc__); return
@@ -84,11 +112,11 @@ def main():
     else:
         # 允許用空白分隔的多字詞：先整串試，失敗再逐字
         joined = " ".join(args)
-        terms = [joined] if judge(joined, pool, skills, blocked)[0] != "❓ 查無" else args
+        terms = [joined] if judge(joined, pool, skills, blocked, unblocked)[0] != "❓ 查無" else args
     width = max((len(t) for t in terms), default=10)
     counts = {}
     for t in terms:
-        r = judge(t, pool, skills, blocked)
+        r = judge(t, pool, skills, blocked, unblocked)
         if not r:
             continue
         verdict, why = r
